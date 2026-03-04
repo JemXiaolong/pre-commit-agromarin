@@ -1,0 +1,14 @@
+- id: agromarin-po-format
+  name: Format .po files (AgroMarin)
+  description: Sort entries by msgid and clean redundant translations
+  entry: agromarin-po-format
+  language: python
+  types: [pofile]
+  additional_dependencies: ['polib']
+
+- id: agromarin-auto-fix
+  name: Auto-fix lint patterns (AgroMarin)
+  description: Fix prefer-env-translation, field-string-redundant, no-else-raise
+  entry: agromarin-auto-fix
+  language: python
+  types: [python]
