@@ -19,38 +19,15 @@ default_language_version:
   python: python3
 
 repos:
-  # === AgroMarin custom hooks ===
+  # === AgroMarin (bundles: autoflake + pyupgrade + black + isort + flake8 + bugbear) ===
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v1.0.0
+    rev: v2.0.0
     hooks:
+      - id: agromarin-fix
+      - id: agromarin-check
       - id: agromarin-po-format
-      - id: agromarin-auto-fix
 
-  # === Formatters (auto-fix) ===
-  - repo: https://github.com/PyCQA/autoflake
-    rev: v2.3.3
-    hooks:
-      - id: autoflake
-        args: [--in-place, --remove-all-unused-imports, --ignore-init-module-imports]
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
-    hooks:
-      - id: pyupgrade
-        args: [--py312-plus]
-
-  - repo: https://github.com/psf/black
-    rev: '26.1.0'
-    hooks:
-      - id: black
-        args: [--line-length=88]
-
-  - repo: https://github.com/pycqa/isort
-    rev: '7.0.0'
-    hooks:
-      - id: isort
-        args: [--profile=black, --line-length=88]
-
+  # === Prettier (node-based, cannot bundle in Python) ===
   - repo: local
     hooks:
       - id: prettier
@@ -62,13 +39,7 @@ repos:
           - prettier@3.4.2
           - '@prettier/plugin-xml@3.4.1'
 
-  # === Linters ===
-  - repo: https://github.com/PyCQA/flake8
-    rev: '7.3.0'
-    hooks:
-      - id: flake8
-        additional_dependencies: [flake8-bugbear]
-
+  # === Pylint-Odoo (heavy deps, kept separate) ===
   - repo: https://github.com/OCA/pylint-odoo
     rev: v9.3.23
     hooks:

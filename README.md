@@ -1,45 +1,78 @@
 # pre-commit-agromarin
 
-Pre-commit hooks for AgroMarin Odoo development.
+Pre-commit hooks for AgroMarin Odoo development. Bundles multiple tools into
+a single CLI so consumer repos only need one `repo:` entry for all Python
+linting and formatting.
 
 ## Hooks
 
+### agromarin-fix
+
+Auto-fix pipeline for Python files (runs in order):
+
+1. **Custom fixers** (AgroMarin):
+   - `prefer-env-translation`: `_()` -> `self.env._()`
+   - `field-string-redundant`: removes redundant `string=`
+   - `no-else-raise`: removes unnecessary `else` after `raise`
+2. **autoflake**: removes unused imports
+3. **pyupgrade**: modernizes Python syntax (3.12+)
+4. **isort**: sorts imports (black profile)
+5. **black**: formats code (line-length 88)
+
+### agromarin-check
+
+Lint check pipeline for Python files:
+- **flake8** with **flake8-bugbear** plugin
+
 ### agromarin-po-format
 
-Formats `.po` files to match OCA expected format:
+Formats `.po` files:
 - Sorts entries by `msgid`
 - Clears redundant translations where `msgid == msgstr` (except `i18n_extra/`)
 
-### agromarin-auto-fix
-
-Auto-fixes common pylint-odoo patterns in Python files:
-- `prefer-env-translation`: Replaces `_()` with `self.env._()`
-- `field-string-redundant`: Removes redundant `string=` parameter from field definitions
-- `no-else-raise`: Removes unnecessary `else` after `raise`
-- Cleans up unused `_` imports after translation fixes
-
 ## Usage
-
-Add to your `.pre-commit-config.yaml`:
 
 ```yaml
 repos:
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v1.0.0
+    rev: v2.0.0
     hooks:
+      - id: agromarin-fix
+      - id: agromarin-check
       - id: agromarin-po-format
-      - id: agromarin-auto-fix
 ```
+
+This replaces separate entries for black, isort, autoflake, pyupgrade, and flake8.
+
+## Architecture
+
+```
+src/pre_commit_agromarin/
+    cli.py              # Entry points (agromarin-fix, agromarin-check, agromarin-po-format)
+    runner.py           # Pipeline orchestrator
+    po_format.py        # PO file formatter
+    fixers/             # Custom AgroMarin fixers (modular)
+        translation.py
+        field_string.py
+        no_else_raise.py
+    tools/              # Third-party tool wrappers (modular)
+        autoflake_tool.py
+        pyupgrade_tool.py
+        black_tool.py
+        isort_tool.py
+        flake8_tool.py
+```
+
+To add a new tool: create a module in `tools/` with a `run(files)` function,
+then add it to the pipeline in `runner.py`.
 
 ## Config Templates
 
-The `config/` directory contains reference configurations used across AgroMarin repos:
-- `.pylintrc` - Pylint + pylint-odoo configuration
-- `.flake8` - Flake8 configuration
-- `.eslintrc.json` - ESLint configuration for Odoo JS
-- `.pre-commit-config.yaml` - Full pre-commit template
-
-Copy them to your repo root as needed.
+The `config/` directory contains reference configurations:
+- `.pylintrc` - Pylint + pylint-odoo
+- `.flake8` - Flake8
+- `.eslintrc.json` - ESLint for Odoo JS
+- `.pre-commit-config.yaml` - Full template for consumer repos
 
 ## License
 

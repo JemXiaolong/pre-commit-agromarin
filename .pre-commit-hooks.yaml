@@ -1,14 +1,25 @@
+- id: agromarin-fix
+  name: AgroMarin auto-fix (Python)
+  description: >
+    Run custom fixers + autoflake + pyupgrade + isort + black
+    in a single pass.
+  entry: agromarin-fix
+  language: python
+  types: [python]
+  require_serial: true
+
+- id: agromarin-check
+  name: AgroMarin lint check (Python)
+  description: >
+    Run flake8 with bugbear plugin.
+  entry: agromarin-check
+  language: python
+  types: [python]
+  require_serial: true
+
 - id: agromarin-po-format
-  name: Format .po files (AgroMarin)
-  description: Sort entries by msgid and clean redundant translations
+  name: AgroMarin .po formatter
+  description: Sort entries by msgid and clean redundant translations.
   entry: agromarin-po-format
   language: python
   types: [pofile]
-  additional_dependencies: ['polib']
-
-- id: agromarin-auto-fix
-  name: Auto-fix lint patterns (AgroMarin)
-  description: Fix prefer-env-translation, field-string-redundant, no-else-raise
-  entry: agromarin-auto-fix
-  language: python
-  types: [python]
