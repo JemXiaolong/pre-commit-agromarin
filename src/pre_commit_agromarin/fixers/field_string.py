@@ -70,12 +70,23 @@ def _find_field_block(lines, idx):
     return field_start, field_end
 
 
+def _is_relational_field(line):
+    """Check if the field definition is a relational field (comodel_name is required)."""
+    relational = {"Many2one", "One2many", "Many2many", "Reference", "Many2oneReference"}
+    match = re.search(r'fields\.(\w+)\(', line)
+    return match is not None and match.group(1) in relational
+
+
 def _remove_string_param(lines, field_start, field_end):
     """Remove string= parameter from a field block. Returns True if modified."""
     start_line = lines[field_start]
 
+    # Never strip the first positional string from relational fields — it is
+    # the comodel_name, not a redundant label.
+    is_relational = _is_relational_field(start_line)
+
     # Positional string: fields.Integer("Sequence", default=10)
-    if re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*,', start_line):
+    if not is_relational and re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*,', start_line):
         new_line = re.sub(
             r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*,\s*', r'\1', start_line
         )
@@ -84,7 +95,7 @@ def _remove_string_param(lines, field_start, field_end):
             return True
 
     # Positional string only: fields.XXX("String")
-    if re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*\)', start_line):
+    if not is_relational and re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*\)', start_line):
         new_line = re.sub(
             r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*\)', r'\1)', start_line
         )
