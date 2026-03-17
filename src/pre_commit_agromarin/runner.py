@@ -87,10 +87,40 @@ def _print_report(file_steps, py_files, has_modifications):
     padding = 62 - 48 - len(str(total)) - len(str(modified_count)) - len(str(clean_count))
     w(" " * max(padding, 1) + f"{_DIM}\u2502{_RESET}\n")
     w(f"{_DIM}\u2502{_RESET}  Status: {status}")
-    # Pad to box width (approximate, ANSI codes mess up counting)
     w(f"\n{_DIM}\u2514" + "\u2500" * 62 + f"\u2518{_RESET}\n")
 
-    # ── Tool Effectiveness ──
+    if not has_modifications:
+        # ── Acceptance Table (all clean) ──
+        _print_acceptance(w, total)
+    else:
+        # ── Tool Effectiveness + Details (has fixes) ──
+        _print_tool_effectiveness(w, file_steps, py_files, total)
+        _print_details_by_module(w, file_steps, py_files)
+
+
+def _print_acceptance(w, total):
+    """Print acceptance seal when all files pass clean."""
+    step_count = len(_ALL_STEPS)
+    bar_width = 42
+    full_bar = "\u2588" * bar_width
+
+    w(f"\n{_DIM}\u250c\u2500 Acceptance \u2500" + "\u2500" * 49 + f"\u2510{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}\n")
+
+    for step in _ALL_STEPS:
+        w(f"{_DIM}\u2502{_RESET}    {_GREEN}\u2713{_RESET} {step:<22s} {_GREEN}PASSED{_RESET}\n")
+
+    w(f"{_DIM}\u2502{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}    {_GREEN}{full_bar}{_RESET}  {_BOLD}{step_count}/{step_count} PASSED{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}{'':>14s}{_BOLD}{_GREEN}\u2705 APPROVED FOR COMMIT{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}{'':>14s}{_DIM}({total} files verified){_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}\n")
+    w(f"{_DIM}\u2514" + "\u2500" * 62 + f"\u2518{_RESET}\n\n")
+
+
+def _print_tool_effectiveness(w, file_steps, py_files, total):
+    """Print tool effectiveness table with progress bars."""
     tool_counts = {}
     for step in _ALL_STEPS:
         tool_counts[step] = sum(
@@ -113,8 +143,9 @@ def _print_report(file_steps, py_files, has_modifications):
 
     w(f"{_DIM}\u2514" + "\u2500" * 62 + f"\u2518{_RESET}\n")
 
-    # ── Details by Module ──
-    # Group files by their top-level directory (Odoo module)
+
+def _print_details_by_module(w, file_steps, py_files):
+    """Print per-file details grouped by Odoo module."""
     modules = {}
     for f in py_files:
         parts = Path(f).parts
@@ -133,7 +164,6 @@ def _print_report(file_steps, py_files, has_modifications):
             connector = "\u2514\u2500\u2500" if is_last else "\u251c\u2500\u2500"
             sub_connector = "   " if is_last else "\u2502  "
 
-            # File path relative to module
             rel = str(Path(f).relative_to(module)) if module != "." else f
             fix_count = sum(1 for v in steps.values() if v)
 
@@ -144,7 +174,6 @@ def _print_report(file_steps, py_files, has_modifications):
 
             w(f"{_DIM}\u2502{_RESET}  {_DIM}{connector}{_RESET} {rel:<40s} {label}\n")
 
-            # Show which tools made changes (only for modified files)
             if fix_count > 0:
                 tools_used = [s for s in _ALL_STEPS if steps.get(s, False)]
                 tools_str = "  ".join(f"{_YELLOW}*{_RESET} {t}" for t in tools_used)
