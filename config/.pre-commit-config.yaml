@@ -19,25 +19,15 @@ default_language_version:
   python: python3
 
 repos:
-  # === AgroMarin (bundles: autoflake + pyupgrade + black + isort + flake8 + bugbear) ===
+  # === AgroMarin (Python + JS/XML formatting + linting) ===
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v2.0.0
+    rev: v2.0.1
     hooks:
       - id: agromarin-fix
       - id: agromarin-check
       - id: agromarin-po-format
-
-  # === Prettier (node-based, cannot bundle in Python) ===
-  - repo: local
-    hooks:
-      - id: prettier
-        name: prettier (XML/JS)
-        entry: prettier --write --plugin=@prettier/plugin-xml
-        language: node
-        types_or: [javascript, xml]
-        additional_dependencies:
-          - prettier@3.4.2
-          - '@prettier/plugin-xml@3.4.1'
+      - id: agromarin-prettier
+      - id: agromarin-eslint
 
   # === Pylint-Odoo (heavy deps, kept separate) ===
   - repo: https://github.com/OCA/pylint-odoo

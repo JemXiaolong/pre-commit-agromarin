@@ -23,3 +23,22 @@
   entry: agromarin-po-format
   language: python
   types: [pofile]
+
+- id: agromarin-prettier
+  name: AgroMarin Prettier (XML/JS)
+  description: Format XML and JavaScript files with Prettier.
+  entry: prettier --write --plugin=@prettier/plugin-xml
+  language: node
+  types_or: [javascript, xml]
+  additional_dependencies:
+    - prettier@3.4.2
+    - '@prettier/plugin-xml@3.4.1'
+
+- id: agromarin-eslint
+  name: AgroMarin ESLint (JS)
+  description: Lint JavaScript files with ESLint and Odoo globals.
+  entry: eslint --config .eslintrc.json
+  language: node
+  types: [javascript]
+  additional_dependencies:
+    - eslint@8.57.1
