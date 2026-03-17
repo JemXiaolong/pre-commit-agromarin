@@ -1,6 +1,7 @@
 """Pipeline orchestrator for the AgroMarin lint tools."""
 
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from .fixers import ALL_FIXERS
@@ -22,6 +23,14 @@ CHECK_PIPELINE = [
 # All step names in order for the report
 _ALL_STEPS = ["agromarin-fixers"] + [name for name, _ in FIX_PIPELINE]
 
+# ANSI color helpers
+_BOLD = "\033[1m"
+_RESET = "\033[0m"
+_YELLOW = "\033[33m"
+_GREEN = "\033[32m"
+_CYAN = "\033[36m"
+_DIM = "\033[2m"
+
 
 def _read_files(files):
     """Read file contents for modification detection."""
@@ -33,40 +42,116 @@ def _read_files(files):
     return contents
 
 
-def _print_report(file_steps, py_files):
-    """Print a coverage report showing what each step did to each file."""
-    modified_count = 0
-    unchanged_count = 0
+def _bar(ratio, width=10):
+    """Render a progress bar string from a 0.0-1.0 ratio."""
+    filled = round(ratio * width)
+    return "\u2588" * filled + "\u2591" * (width - filled)
 
-    sys.stderr.write("\n\033[1m=== AgroMarin Fix Report ===\033[0m\n\n")
 
+def _print_report(file_steps, py_files, has_modifications):
+    """Print an executive coverage report."""
+    w = sys.stderr.write
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    total = len(py_files)
+
+    # Classify files
+    modified_files = []
+    clean_files = []
     for f in py_files:
-        steps = file_steps.get(f, {})
-        file_modified = any(steps.values())
-
-        if file_modified:
-            modified_count += 1
+        if any(file_steps.get(f, {}).values()):
+            modified_files.append(f)
         else:
-            unchanged_count += 1
+            clean_files.append(f)
 
-        short_name = f
-        sys.stderr.write(f"\033[1m  {short_name}\033[0m\n")
+    modified_count = len(modified_files)
+    clean_count = len(clean_files)
 
-        for step in _ALL_STEPS:
-            changed = steps.get(step, False)
-            if changed:
-                sys.stderr.write(f"    \033[33m*\033[0m {step:<20s} \033[33mmodified\033[0m\n")
+    # ── Header ──
+    w(f"\n{_BOLD}")
+    w("\u2554" + "\u2550" * 62 + "\u2557\n")
+    w(f"\u2551{'AgroMarin Pre-commit Report':^62s}\u2551\n")
+    w(f"\u2551{now:^62s}\u2551\n")
+    w("\u255a" + "\u2550" * 62 + "\u255d\n")
+    w(_RESET)
+
+    # ── Summary ──
+    if has_modifications:
+        status = f"{_YELLOW}FIXES APPLIED{_RESET} (re-run to verify)"
+    else:
+        status = f"{_GREEN}ALL CLEAN{_RESET}"
+
+    w(f"\n{_DIM}\u250c\u2500 Summary \u2500" + "\u2500" * 51 + f"\u2510{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}  Files scanned: {_BOLD}{total}{_RESET}")
+    w(f"    Modified: {_YELLOW}{modified_count}{_RESET}")
+    w(f"    Clean: {_GREEN}{clean_count}{_RESET}")
+    padding = 62 - 48 - len(str(total)) - len(str(modified_count)) - len(str(clean_count))
+    w(" " * max(padding, 1) + f"{_DIM}\u2502{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}  Status: {status}")
+    # Pad to box width (approximate, ANSI codes mess up counting)
+    w(f"\n{_DIM}\u2514" + "\u2500" * 62 + f"\u2518{_RESET}\n")
+
+    # ── Tool Effectiveness ──
+    tool_counts = {}
+    for step in _ALL_STEPS:
+        tool_counts[step] = sum(
+            1 for f in py_files if file_steps.get(f, {}).get(step, False)
+        )
+
+    w(f"\n{_DIM}\u250c\u2500 Tool Effectiveness \u2500" + "\u2500" * 41 + f"\u2510{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}  {'Tool':<22s} {'Fixed':>5s}    {'Coverage':<16s}     {_DIM}\u2502{_RESET}\n")
+    w(f"{_DIM}\u2502{_RESET}  " + "\u2500" * 22 + " " + "\u2500" * 5 + "    " + "\u2500" * 16 + "     " + f"{_DIM}\u2502{_RESET}\n")
+
+    for step in _ALL_STEPS:
+        count = tool_counts[step]
+        ratio = count / total if total > 0 else 0
+        pct = f"{ratio * 100:.0f}%"
+        bar = _bar(ratio)
+        if count > 0:
+            w(f"{_DIM}\u2502{_RESET}  {_YELLOW}{step:<22s} {count:>5d}{_RESET}    {bar}  {pct:>4s}     {_DIM}\u2502{_RESET}\n")
+        else:
+            w(f"{_DIM}\u2502{_RESET}  {_DIM}{step:<22s} {count:>5d}    {bar}  {pct:>4s}{_RESET}     {_DIM}\u2502{_RESET}\n")
+
+    w(f"{_DIM}\u2514" + "\u2500" * 62 + f"\u2518{_RESET}\n")
+
+    # ── Details by Module ──
+    # Group files by their top-level directory (Odoo module)
+    modules = {}
+    for f in py_files:
+        parts = Path(f).parts
+        module = parts[0] if parts else "."
+        modules.setdefault(module, []).append(f)
+
+    w(f"\n{_DIM}\u250c\u2500 Details by Module \u2500" + "\u2500" * 42 + f"\u2510{_RESET}\n")
+
+    for module, mod_files in sorted(modules.items()):
+        w(f"{_DIM}\u2502{_RESET}\n")
+        w(f"{_DIM}\u2502{_RESET}  {_BOLD}{_CYAN}{module}/{_RESET}\n")
+
+        for idx, f in enumerate(sorted(mod_files)):
+            steps = file_steps.get(f, {})
+            is_last = idx == len(mod_files) - 1
+            connector = "\u2514\u2500\u2500" if is_last else "\u251c\u2500\u2500"
+            sub_connector = "   " if is_last else "\u2502  "
+
+            # File path relative to module
+            rel = str(Path(f).relative_to(module)) if module != "." else f
+            fix_count = sum(1 for v in steps.values() if v)
+
+            if fix_count > 0:
+                label = f"{_YELLOW}{fix_count} fix{'es' if fix_count != 1 else ''} applied{_RESET}"
             else:
-                sys.stderr.write(f"    \033[32m-\033[0m {step:<20s} \033[32mno changes\033[0m\n")
+                label = f"{_GREEN}\u2713 clean{_RESET}"
 
-        sys.stderr.write("\n")
+            w(f"{_DIM}\u2502{_RESET}  {_DIM}{connector}{_RESET} {rel:<40s} {label}\n")
 
-    sys.stderr.write(
-        f"\033[1mSummary:\033[0m "
-        f"\033[33m{modified_count} modified\033[0m, "
-        f"\033[32m{unchanged_count} unchanged\033[0m "
-        f"({modified_count + unchanged_count} files total)\n\n"
-    )
+            # Show which tools made changes (only for modified files)
+            if fix_count > 0:
+                tools_used = [s for s in _ALL_STEPS if steps.get(s, False)]
+                tools_str = "  ".join(f"{_YELLOW}*{_RESET} {t}" for t in tools_used)
+                w(f"{_DIM}\u2502{_RESET}  {_DIM}{sub_connector}{_RESET} {tools_str}\n")
+
+    w(f"{_DIM}\u2502{_RESET}\n")
+    w(f"{_DIM}\u2514" + "\u2500" * 62 + f"\u2518{_RESET}\n\n")
 
 
 def run_fix(files):
@@ -103,16 +188,16 @@ def run_fix(files):
         for f in py_files:
             file_steps[f][name] = before_step.get(f) != after_step.get(f)
 
-    # Print the report
-    _print_report(file_steps, py_files)
-
     # Detect if any file was modified overall
     after = _read_files(py_files)
-    for f in py_files:
-        if before.get(f) != after.get(f):
-            return 1
+    has_modifications = any(
+        before.get(f) != after.get(f) for f in py_files
+    )
 
-    return 0
+    # Print the executive report
+    _print_report(file_steps, py_files, has_modifications)
+
+    return 1 if has_modifications else 0
 
 
 def run_check(files):
