@@ -27,11 +27,11 @@
 - id: agromarin-prettier
   name: AgroMarin Prettier (XML/JS)
   description: Format XML and JavaScript files with Prettier.
-  entry: prettier --write --plugin=@prettier/plugin-xml
+  entry: prettier --write --no-error-on-unmatched-pattern
   language: node
   types_or: [javascript, xml]
   additional_dependencies:
-    - prettier@3.4.2
+    - 'prettier@3.4.2'
     - '@prettier/plugin-xml@3.4.1'
 
 - id: agromarin-eslint
