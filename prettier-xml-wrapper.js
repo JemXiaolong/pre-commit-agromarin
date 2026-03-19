@@ -11,7 +11,9 @@ const { execFileSync } = require("child_process");
 const path = require("path");
 
 // Resolve the plugin from this script's node_modules (pre-commit cache)
-const pluginPath = require.resolve("@prettier/plugin-xml");
+// Use { paths: [__dirname] } so Node searches from the wrapper location
+// (inside pre-commit cache) instead of the project working directory.
+const pluginPath = require.resolve("@prettier/plugin-xml", { paths: [__dirname] });
 
 // Build prettier args: --write --plugin <resolved_path> <files...>
 const files = process.argv.slice(2);
