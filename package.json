@@ -2,5 +2,8 @@
   "name": "pre-commit-agromarin",
   "version": "2.0.1",
   "private": true,
-  "description": "AgroMarin pre-commit hooks for Odoo development"
+  "description": "AgroMarin pre-commit hooks for Odoo development",
+  "bin": {
+    "prettier-xml": "./prettier-xml-wrapper.js"
+  }
 }
