@@ -15,9 +15,12 @@ const path = require("path");
 // (inside pre-commit cache) instead of the project working directory.
 const pluginPath = require.resolve("@prettier/plugin-xml", { paths: [__dirname] });
 
-// Build prettier args: --write --plugin <resolved_path> <files...>
+// Build prettier args: --write --plugin <resolved_path> --tab-width 4 <files...>
+// --tab-width 4 is explicit to match .editorconfig (indent_size = 4 for JS/XML).
+// This ensures consistent formatting in CI environments where .editorconfig
+// may not be resolved correctly by prettier.
 const files = process.argv.slice(2);
-const args = ["--write", "--plugin", pluginPath, ...files];
+const args = ["--write", "--plugin", pluginPath, "--tab-width", "4", ...files];
 
 try {
     execFileSync("prettier", args, { stdio: "inherit" });

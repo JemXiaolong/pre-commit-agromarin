@@ -1,6 +1,6 @@
 {
   "name": "pre-commit-agromarin",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "private": true,
   "description": "AgroMarin pre-commit hooks for Odoo development",
   "bin": {
