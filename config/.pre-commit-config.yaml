@@ -21,7 +21,7 @@ default_language_version:
 repos:
   # === AgroMarin (Python + JS/XML formatting + linting) ===
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v2.0.1
+    rev: v2.1.1
     hooks:
       - id: agromarin-fix
       - id: agromarin-check
