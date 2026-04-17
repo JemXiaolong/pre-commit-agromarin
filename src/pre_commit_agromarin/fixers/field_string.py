@@ -1,4 +1,16 @@
-"""Fix field-string-redundant: remove redundant string= from field definitions."""
+"""Fix field-string-redundant: remove redundant string= from field definitions.
+
+A string= (or positional string) is redundant when its value exactly matches
+the label Odoo would auto-generate from the field name via:
+
+    field_name.replace("_", " ").title()
+
+Examples:
+  speed = fields.Float(string="Speed")          # redundant  → remove
+  speed_limit = fields.Float(string="Speed Limit")  # redundant  → remove
+  speed_limit = fields.Float(string="Speed (km/h)")  # meaningful → keep
+  battery_threshold = fields.Float(string="Battery Threshold (%)")  # meaningful → keep
+"""
 
 import re
 from pathlib import Path
@@ -77,31 +89,69 @@ def _is_relational_field(line):
     return match is not None and match.group(1) in relational
 
 
+def _get_field_name(line: str) -> str | None:
+    """Extract the Python attribute name from a field declaration line.
+
+    Example: '    speed_limit_warning = fields.Float(' → 'speed_limit_warning'
+    """
+    match = re.match(r'\s*(\w+)\s*=\s*fields\.\w+\(', line)
+    return match.group(1) if match else None
+
+
+def _auto_label(field_name: str) -> str:
+    """Return the label Odoo auto-generates from a field name."""
+    return field_name.replace("_", " ").title()
+
+
+def _extract_string_value(text: str) -> str | None:
+    """Extract the inner string value from the first quoted literal in *text*."""
+    match = re.search(r'["\'](.+?)["\']', text)
+    return match.group(1) if match else None
+
+
+def _is_redundant(field_name: str | None, string_value: str | None) -> bool:
+    """Return True only when the string equals Odoo's auto-generated label."""
+    if field_name is None or string_value is None:
+        return False
+    return string_value == _auto_label(field_name)
+
+
 def _remove_string_param(lines, field_start, field_end):
-    """Remove string= parameter from a field block. Returns True if modified."""
+    """Remove string= parameter from a field block only when redundant.
+
+    Returns True if modified.
+    """
     start_line = lines[field_start]
 
     # Never strip the first positional string from relational fields — it is
     # the comodel_name, not a redundant label.
     is_relational = _is_relational_field(start_line)
 
+    field_name = _get_field_name(start_line)
+
     # Positional string: fields.Integer("Sequence", default=10)
-    if not is_relational and re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*,', start_line):
-        new_line = re.sub(
-            r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*,\s*', r'\1', start_line
-        )
-        if new_line != start_line:
-            lines[field_start] = new_line
-            return True
+    pos_with_comma = re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*,', start_line)
+    if not is_relational and pos_with_comma:
+        string_value = pos_with_comma.group(3)
+        if _is_redundant(field_name, string_value):
+            new_line = re.sub(
+                r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*,\s*', r'\1', start_line
+            )
+            if new_line != start_line:
+                lines[field_start] = new_line
+                return True
 
     # Positional string only: fields.XXX("String")
-    if not is_relational and re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*\)', start_line):
-        new_line = re.sub(
-            r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*\)', r'\1)', start_line
-        )
-        if new_line != start_line:
-            lines[field_start] = new_line
-            return True
+    pos_only = re.search(r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*\)', start_line)
+    if not is_relational and pos_only:
+        string_value = pos_only.group(3)
+        if _is_redundant(field_name, string_value):
+            new_line = re.sub(
+                r'(fields\.\w+\()\s*(["\'])(.+?)\2\s*\)', r'\1)', start_line
+            )
+            if new_line != start_line:
+                lines[field_start] = new_line
+                return True
 
     # Keyword string= within the field block
     for check_idx in range(field_start, field_end + 1):
@@ -109,12 +159,22 @@ def _remove_string_param(lines, field_start, field_end):
         if not re.search(r'\bstring\s*=\s*["\']', check_line):
             continue
 
-        # Line contains ONLY string=
+        string_value = _extract_string_value(
+            re.search(r'\bstring\s*=\s*(["\'].+?["\'])', check_line).group(1)
+            if re.search(r'\bstring\s*=\s*(["\'].+?["\'])', check_line)
+            else ""
+        )
+
+        if not _is_redundant(field_name, string_value):
+            # String is meaningful — leave it alone
+            return False
+
+        # Line contains ONLY string= (and it is redundant)
         if re.match(r'^\s+string\s*=\s*["\'].*["\']\s*,?\s*$', check_line):
             del lines[check_idx]
             return True
 
-        # string= inline with other params
+        # string= inline with other params (and it is redundant)
         new_line = re.sub(
             r',?\s*string\s*=\s*(["\']).*?\1\s*,?',
             lambda m: ','
