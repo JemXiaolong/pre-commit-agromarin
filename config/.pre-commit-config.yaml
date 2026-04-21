@@ -19,12 +19,21 @@ default_language_version:
   python: python3
 
 repos:
-  # === AgroMarin (Python + JS/XML formatting + linting) ===
-  - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v2.1.2
+  # === Ruff (linter + formatter, replaces black/isort/flake8/autoflake/pyupgrade/bugbear) ===
+  # Config: ruff.toml in your repo root (extend core/ruff.toml if available)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
     hooks:
-      - id: agromarin-fix
-      - id: agromarin-check
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  # === AgroMarin (custom Odoo fixers + JS/XML/PO formatting) ===
+  # Python linting was removed in v3.0.0; ruff handles it now.
+  - repo: https://github.com/JemXiaolong/pre-commit-agromarin
+    rev: v3.0.0
+    hooks:
+      - id: agromarin-custom-fixers
       - id: agromarin-po-format
       - id: agromarin-prettier
       - id: agromarin-eslint
@@ -61,8 +70,5 @@ repos:
       - id: oca-checks-odoo-module-fixit
 
   # === Commit message ===
-  - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v3.0.0
-    hooks:
-      - id: conventional-pre-commit
-        stages: [commit-msg]
+  # Consumer repo provides scripts/check_commit_msg.py to enforce
+  # AgroMarin format: [TAG] module: summary + Task ID: XXXXX footer.
