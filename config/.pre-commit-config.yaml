@@ -21,8 +21,10 @@ default_language_version:
 repos:
   # === Ruff (linter + formatter, replaces black/isort/flake8/autoflake/pyupgrade/bugbear) ===
   # Config: ruff.toml in your repo root (extend core/ruff.toml if available)
+  # Pin to exact version to avoid surprise rule changes; AgroMarin's
+  # core/ruff.toml requires preview rules added in 0.15.10+ (RUF065, RUF069).
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.11
     hooks:
       - id: ruff-check
         args: [--fix]
