@@ -1,18 +1,11 @@
-- id: agromarin-fix
-  name: AgroMarin auto-fix (Python)
+- id: agromarin-custom-fixers
+  name: AgroMarin custom fixers (Odoo-specific)
   description: >
-    Run custom fixers + autoflake + pyupgrade + isort + black
-    in a single pass.
-  entry: agromarin-fix
-  language: python
-  types: [python]
-  require_serial: true
-
-- id: agromarin-check
-  name: AgroMarin lint check (Python)
-  description: >
-    Run flake8 with bugbear plugin.
-  entry: agromarin-check
+    Apply Odoo-specific auto-fixes that no generic linter covers:
+    prefer-env-translation (_() -> self.env._()) and
+    field-string-redundant (drop string= when it matches the auto-label).
+    Generic Python lints are delegated to ruff.
+  entry: agromarin-custom-fixers
   language: python
   types: [python]
   require_serial: true
