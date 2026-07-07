@@ -30,15 +30,18 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  # === AgroMarin (custom Odoo fixers + JS/XML/PO formatting) ===
+  # === AgroMarin (custom Odoo fixers + JS/XML/PO formatting + commit format) ===
   # Python linting was removed in v3.0.0; ruff handles it now.
+  # agromarin-commit-format (hosted since v3.1.0) requires installing the
+  # commit-msg hook type: pre-commit install --hook-type commit-msg
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v3.0.0
+    rev: v3.1.0
     hooks:
       - id: agromarin-custom-fixers
       - id: agromarin-po-format
       - id: agromarin-prettier
       - id: agromarin-eslint
+      - id: agromarin-commit-format
 
   # === Pylint-Odoo (heavy deps, kept separate) ===
   - repo: https://github.com/OCA/pylint-odoo
@@ -72,5 +75,5 @@ repos:
       - id: oca-checks-odoo-module-fixit
 
   # === Commit message ===
-  # Consumer repo provides scripts/check_commit_msg.py to enforce
-  # AgroMarin format: [TAG] module: summary + Task ID: XXXXX footer.
+  # Enforced by the hosted agromarin-commit-format hook above (v3.1.0+).
+  # No local script needed in the consumer repo.

@@ -35,3 +35,14 @@
   types: [javascript]
   additional_dependencies:
     - eslint@8.57.1
+
+- id: agromarin-commit-format
+  name: "AgroMarin commit format: [TAG] module: summary + Task ID"
+  description: >
+    Validate the commit message against the AgroMarin canonical format
+    (coding_guidelines.rst §7.1): [TAG] module: summary (13 allowed tags,
+    <= 80 chars) plus a "Task ID: XXXXX" footer. Merge commits and
+    REL/MERGE tags bypass the body requirement.
+  entry: agromarin-commit-format
+  language: python
+  stages: [commit-msg]

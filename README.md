@@ -35,6 +35,25 @@ Formats XML and JavaScript files with Prettier 3.8.1 and
 Lints JavaScript files with ESLint 8.57.1 using the Odoo globals profile
 in `config/.eslintrc.json`.
 
+### agromarin-commit-format *(new in v3.1.0)*
+
+Validates the commit message against the AgroMarin canonical format
+(`core/doc/coding_guidelines.rst` §7.1):
+
+- `[TAG] module: summary` — 13 allowed tags, first line ≤ 80 chars
+- Mandatory body ending with a `Task ID: XXXXX` footer
+- Merge commits and `REL`/`MERGE` tags bypass the body requirement
+
+Runs on the `commit-msg` stage — consumer repos must install that hook type:
+
+```bash
+pre-commit install --hook-type commit-msg
+```
+
+Previously this lived as a local script (`scripts/check_commit_msg.py`) in
+agromarin-addons; hosting it here gives every repo (core, enterprise,
+agromarin-addons) the same single-source validator.
+
 ## Usage
 
 ```yaml
@@ -49,13 +68,18 @@ repos:
 
   # Odoo-specific AgroMarin hooks
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v3.0.0
+    rev: v3.1.0
     hooks:
       - id: agromarin-custom-fixers
       - id: agromarin-po-format
       - id: agromarin-prettier
       - id: agromarin-eslint
+      - id: agromarin-commit-format
 ```
+
+For upstream-code repos (core, enterprise) a minimal subset is recommended —
+`agromarin-commit-format` plus ruff-check without `ruff-format` (never
+whole-file reformat upstream code); skip the fixers/formatters.
 
 A full reference configuration is available at
 [`config/.pre-commit-config.yaml`](config/.pre-commit-config.yaml).
@@ -102,6 +126,7 @@ has been removed. Delegate to `ruff` in your consumer repo.
 ```
 src/pre_commit_agromarin/
     cli.py              # Entry points (agromarin-custom-fixers, agromarin-po-format)
+    check_commit_msg.py # Commit-message validator (agromarin-commit-format)
     po_format.py        # PO file formatter
     fixers/             # Custom AgroMarin fixers (modular)
         __init__.py     #   ALL_FIXERS list
