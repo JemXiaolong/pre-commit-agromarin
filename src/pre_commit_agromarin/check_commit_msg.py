@@ -8,7 +8,12 @@ Enforces the rules defined in the canonical coding guidelines
 - One of 13 allowed tags: FIX, IMP, ADD, REM, REF, MOV, REV, REL, MERGE,
   I18N, PERF, CLN, LINT
 - ``module`` is snake_case, optionally with ``/`` or ``.`` separators for
-  sub-paths (e.g. ``account_cfdi``, ``stock/routes``)
+  sub-paths (e.g. ``account_cfdi``, ``stock/routes``). Several modules may be
+  listed comma-separated (space after the comma optional) when a change spans
+  more than one, e.g. ``sale, purchase`` or ``base,mail``. A tree-wide or
+  generic change uses the standalone wildcard ``*`` instead of an unreadable
+  module list (Odoo convention; the 80-char cap naturally forces ``*`` once
+  the list stops fitting).
 - Body is mandatory and must end with a ``Task ID: XXXXX`` line
 
 Exposed as the ``agromarin-commit-format`` hook (``commit-msg`` stage):
@@ -38,9 +43,14 @@ ALLOWED_TAGS = (
     "LINT",
 )
 MAX_HEADER = 80
+# A single module: snake_case with optional `/` or `.` sub-path separators.
+_MODULE = r"[a-z][a-z0-9_]*(?:[/.][a-z][a-z0-9_]*)*"
+# The module part is either the standalone wildcard `*` (tree-wide / generic
+# change) or a comma-separated list of one or more modules (Odoo convention).
+_MODULE_PART = rf"(?:\*|{_MODULE}(?:\s*,\s*{_MODULE})*)"
 HEADER_RE = re.compile(
     rf"^\[(?P<tag>{'|'.join(ALLOWED_TAGS)})\] "
-    r"(?P<module>[a-z][a-z0-9_]*(?:[/.][a-z][a-z0-9_]*)*): "
+    rf"(?P<module>{_MODULE_PART}): "
     r"(?P<summary>.+)$"
 )
 TASK_ID_RE = re.compile(r"^Task ID: \d{3,}$", re.MULTILINE)
