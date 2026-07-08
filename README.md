@@ -41,6 +41,9 @@ Validates the commit message against the AgroMarin canonical format
 (`core/doc/coding_guidelines.rst` §7.1):
 
 - `[TAG] module: summary` — 13 allowed tags, first line ≤ 80 chars
+- `module` accepts a single module, a comma-separated list for changes
+  spanning several (`base, mail` / `sale,purchase,repair`), or the standalone
+  wildcard `*` for tree-wide/generic changes (Odoo convention)
 - Mandatory body ending with a `Task ID: XXXXX` footer
 - Merge commits and `REL`/`MERGE` tags bypass the body requirement
 

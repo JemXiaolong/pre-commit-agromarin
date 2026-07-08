@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="pre-commit-agromarin",
-    version="3.1.0",
+    version="3.2.0",
     description=(
         "AgroMarin pre-commit hooks for Odoo development: "
         "custom Odoo-specific fixers + PO/prettier/eslint formatters "
