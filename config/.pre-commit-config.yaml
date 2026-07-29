@@ -21,10 +21,13 @@ default_language_version:
 repos:
   # === Ruff (linter + formatter, replaces black/isort/flake8/autoflake/pyupgrade/bugbear) ===
   # Config: ruff.toml in your repo root (extend core/ruff.toml if available)
-  # Pin to exact version to avoid surprise rule changes; AgroMarin's
-  # core/ruff.toml requires preview rules added in 0.15.10+ (RUF065, RUF069).
+  # Pin to an exact version and keep it in lockstep with the fork's core
+  # (requirements-dev.txt, .github/workflows/ruff.yml, core/.pre-commit-config.yaml):
+  # core/ruff.toml sets explicit-preview-rules and names every preview rule
+  # individually, so a ruff older than the newest selector aborts with
+  # "Unknown rule selector" instead of skipping it (D420/D421 need 0.15.19+).
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.11
+    rev: v0.16.0
     hooks:
       - id: ruff-check
         args: [--fix]
@@ -35,7 +38,7 @@ repos:
   # agromarin-commit-format (hosted since v3.1.0) requires installing the
   # commit-msg hook type: pre-commit install --hook-type commit-msg
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v3.1.0
+    rev: v3.2.0
     hooks:
       - id: agromarin-custom-fixers
       - id: agromarin-po-format

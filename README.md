@@ -63,7 +63,7 @@ agromarin-addons) the same single-source validator.
 repos:
   # Python linting/formatting via ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.16.0
     hooks:
       - id: ruff-check
         args: [--fix]
