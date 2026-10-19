@@ -19,33 +19,24 @@ default_language_version:
   python: python3
 
 repos:
-  # === Ruff (linter + formatter, replaces black/isort/flake8/autoflake/pyupgrade/bugbear) ===
-  # Config: ruff.toml in your repo root (extend core/ruff.toml if available)
-  # Pin to an exact version and keep it in lockstep with the fork's core
-  # (requirements-dev.txt, .github/workflows/ruff.yml, core/.pre-commit-config.yaml,
-  # and the two consumer configs in enterprise/ and agromarin/).
+  # === AgroMarin (ruff fork + custom Odoo fixers + JS/XML/PO + commit format) ===
+  # agromarin-ruff-check / agromarin-ruff-format (v3.3.0+) install the
+  # Agro-Marin/ruff fork (0.16.10+marin.2), which ships the Odoo linter
+  # natively as the E85xx rules; upstream ruff does not know those codes,
+  # which core/ruff.toml selects. The wheel is pinned by URL and sha256 in
+  # this repo's .pre-commit-hooks.yaml, in lockstep with the fork's
+  # odoo/requirements-dev.txt; bump both together. It is published for linux
+  # x86_64 with glibc 2.39 or later only.
+  # Config: ruff.toml in your repo root (extend core/ruff.toml if available).
   #
-  # 0.16.2 is a hard floor, and not because of a rule selector: core/ruff.toml
-  # declares `required-version = ">=0.16.2"` and uses the `output-prefer-rule-codes`
-  # key, which 0.16.0 rejects outright — a TOML parse error blamed on line 1,
-  # which reads like a corrupt config rather than an old binary.
-  #
-  # The older note here justified the floor with the preview selectors D420/D421
-  # (0.15.19+). Those still resolve on 0.16.0, so they no longer set the floor.
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.2
-    hooks:
-      - id: ruff-check
-        args: [--fix]
-      - id: ruff-format
-
-  # === AgroMarin (custom Odoo fixers + JS/XML/PO formatting + commit format) ===
-  # Python linting was removed in v3.0.0; ruff handles it now.
   # agromarin-commit-format (hosted since v3.1.0) requires installing the
   # commit-msg hook type: pre-commit install --hook-type commit-msg
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v3.2.0
+    rev: v3.3.0
     hooks:
+      - id: agromarin-ruff-check
+        args: [--fix]
+      - id: agromarin-ruff-format
       - id: agromarin-custom-fixers
       - id: agromarin-po-format
       - id: agromarin-prettier

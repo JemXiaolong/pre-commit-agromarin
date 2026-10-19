@@ -1,3 +1,26 @@
+- id: agromarin-ruff-check
+  name: AgroMarin ruff check (Agro-Marin/ruff fork)
+  description: >
+    Run ruff check with the Agro-Marin/ruff fork, which ships the Odoo
+    linter (E85xx rules, the per-file checks of test_lint) natively.
+    Pinned to the same wheel as the fork's odoo/requirements-dev.txt.
+  entry: ruff check --force-exclude
+  language: python
+  types_or: [python, pyi]
+  require_serial: true
+  additional_dependencies:
+    - "ruff @ https://github.com/Agro-Marin/ruff/releases/download/0.16.10-marin.2/ruff-0.16.10%2Bmarin.2-py3-none-manylinux_2_39_x86_64.whl#sha256=c1fdcef09339e88e75644950c297e0acdde93e9ed2285a768fdc6f5375d35d29"
+
+- id: agromarin-ruff-format
+  name: AgroMarin ruff format (Agro-Marin/ruff fork)
+  description: Run ruff format with the Agro-Marin/ruff fork.
+  entry: ruff format --force-exclude
+  language: python
+  types_or: [python, pyi]
+  require_serial: true
+  additional_dependencies:
+    - "ruff @ https://github.com/Agro-Marin/ruff/releases/download/0.16.10-marin.2/ruff-0.16.10%2Bmarin.2-py3-none-manylinux_2_39_x86_64.whl#sha256=c1fdcef09339e88e75644950c297e0acdde93e9ed2285a768fdc6f5375d35d29"
+
 - id: agromarin-custom-fixers
   name: AgroMarin custom fixers (Odoo-specific)
   description: >

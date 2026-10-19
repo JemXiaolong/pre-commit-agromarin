@@ -10,6 +10,20 @@ flake8-bugbear as of v3.0.0 — see the migration guide below.
 
 ## Hooks
 
+### agromarin-ruff-check / agromarin-ruff-format *(new in v3.3.0)*
+
+Run `ruff check` and `ruff format` with the
+[Agro-Marin/ruff](https://github.com/Agro-Marin/ruff) fork (0.16.10+marin.2),
+which ships the Odoo linter natively as the `E85xx` rules (the per-file checks
+of Odoo's `test_lint`). The rules stay out of the default selection; enable
+them in the consumer repo's `ruff.toml` (`core/ruff.toml` already does).
+
+The wheel is pinned by URL and sha256, in lockstep with the fork's
+`odoo/requirements-dev.txt`. It is published for linux x86_64 with glibc 2.39
+or later only, so these hooks do not install on macOS, Windows or older
+distributions. They replace `astral-sh/ruff-pre-commit`, which cannot install
+the fork.
+
 ### agromarin-custom-fixers
 
 Auto-fix Odoo-specific conventions for Python files:
@@ -61,18 +75,14 @@ agromarin-addons) the same single-source validator.
 
 ```yaml
 repos:
-  # Python linting/formatting via ruff
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
-    hooks:
-      - id: ruff-check
-        args: [--fix]
-      - id: ruff-format
-
-  # Odoo-specific AgroMarin hooks
   - repo: https://github.com/JemXiaolong/pre-commit-agromarin
-    rev: v3.1.0
+    rev: v3.3.0
     hooks:
+      # Python linting/formatting via the Agro-Marin/ruff fork
+      - id: agromarin-ruff-check
+        args: [--fix]
+      - id: agromarin-ruff-format
+      # Odoo-specific AgroMarin hooks
       - id: agromarin-custom-fixers
       - id: agromarin-po-format
       - id: agromarin-prettier
@@ -81,7 +91,7 @@ repos:
 ```
 
 For upstream-code repos (core, enterprise) a minimal subset is recommended —
-`agromarin-commit-format` plus ruff-check without `ruff-format` (never
+`agromarin-commit-format` plus `agromarin-ruff-check` without `agromarin-ruff-format` (never
 whole-file reformat upstream code); skip the fixers/formatters.
 
 A full reference configuration is available at
